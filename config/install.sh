@@ -318,7 +318,14 @@ chown gns3:gns3 /home/gns3/.bash_profile
 cp 99-gns3-bridge.conf /etc/sysctl.d/99-gns3-bridge.conf
 chmod 644 /etc/sysctl.d/99-gns3-bridge.conf
 chown root:root /etc/sysctl.d/99-gns3-bridge.conf
-# The net.bridge.* keys only exist when the br_netfilter module is loaded
+# The net.bridge.* keys only exist when the br_netfilter module is loaded, so
+# load it at boot (systemd-sysctl applies sysctl.d after systemd-modules-load)
+# and now, before applying the file
+mkdir -p /etc/modules-load.d
+cp br_netfilter.conf /etc/modules-load.d/br_netfilter.conf
+chmod 644 /etc/modules-load.d/br_netfilter.conf
+chown root:root /etc/modules-load.d/br_netfilter.conf
+modprobe br_netfilter || true
 sysctl -p /etc/sysctl.d/99-gns3-bridge.conf || true
 
 # Open GNS3 menu at startup
