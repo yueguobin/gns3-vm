@@ -9,5 +9,11 @@ then
     exit 1
 fi
 
-export BRANCH="resolute-stable"
-curl -Lk "https://raw.githubusercontent.com/GNS3/gns3-vm/$BRANCH/scripts/restore.sh" | bash
+# use the repositories this VM was installed from
+if [[ -f "/etc/gns3vm-sources.conf" ]]
+then
+    . "/etc/gns3vm-sources.conf"
+fi
+
+export BRANCH="${GNS3_VM_BRANCH:-resolute-stable}"
+curl -Lk "https://raw.githubusercontent.com/${GNS3_VM_REPO:-GNS3/gns3-vm}/$BRANCH/scripts/restore.sh" | bash

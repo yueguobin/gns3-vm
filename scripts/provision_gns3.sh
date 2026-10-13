@@ -19,19 +19,31 @@ python3 -m pip install --upgrade pip wheel setuptools
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+# remember what was explicitly requested before falling back to the defaults
+GNS3_SERVER_REPO_OVERRIDE="$GNS3_SERVER_REPO"
+GNS3_SERVER_REF_OVERRIDE="$GNS3_SERVER_REF"
+export GNS3_SERVER_REPO="${GNS3_SERVER_REPO:-GNS3/gns3-server}"
+
 if [[ "$GNS3_RELEASE_CHANNEL" == "2.2" ]]
 then
   # Install from a branch on GitHub
   echo "Installing GNS3 server $GNS3_VERSION from GitHub"
-  python3 -m pip install "gns3-server@git+https://github.com/GNS3/gns3-server.git@v$GNS3_VERSION"
+  python3 -m pip install "gns3-server@git+https://github.com/${GNS3_SERVER_REPO}.git@v$GNS3_VERSION"
+elif [[ "$GNS3_RELEASE_CHANNEL" == "3.1" && -n "$GNS3_SERVER_REF" ]]
+then
+  # A specific branch, tag or commit was requested: install it from GitHub
+  echo "Installing GNS3 server $GNS3_SERVER_REF from GitHub"
+  python3 -m pip install "gns3-server[ai-features]@git+https://github.com/${GNS3_SERVER_REPO}.git@${GNS3_SERVER_REF}"
 elif [[ "$GNS3_RELEASE_CHANNEL" == "3.1" ]]
 then
   echo "Installing GNS3 server $GNS3_VERSION from PyPI"
   python3 -m pip install gns3-server[ai-features]==${GNS3_VERSION}
 elif [[ "$GNS3_RELEASE_CHANNEL" == "3.1dev" ]]
 then
-  echo "Installing GNS3 server dev $GNS3_VERSION from GitHub"
-  python3 -m pip install "gns3-server[ai-features]@git+https://github.com/GNS3/gns3-server.git@3.1"
+  # the latest development version, unless a ref was requested
+  GNS3_SERVER_REF="${GNS3_SERVER_REF:-3.1}"
+  echo "Installing GNS3 server dev $GNS3_SERVER_REF from GitHub"
+  python3 -m pip install "gns3-server[ai-features]@git+https://github.com/${GNS3_SERVER_REPO}.git@${GNS3_SERVER_REF}"
 fi
 
 # clean pip cache to reduce the size of the VM
@@ -51,6 +63,15 @@ projects_path = /opt/gns3/projects
 report_errors = True
 default_nat_interface = gns3br0
 EOF
+
+# Remember the repository the server was installed from, so that the in-VM
+# upgrade and restore commands keep using it. Only when one was explicitly
+# requested, otherwise the configuration of the VM is left untouched.
+if [[ -f "/etc/gns3vm-sources.conf" ]] && [[ -n "$GNS3_SERVER_REPO_OVERRIDE$GNS3_SERVER_REF_OVERRIDE" ]]
+then
+    sudo sed -i -e "s|^GNS3_SERVER_REPO=.*|GNS3_SERVER_REPO=\"${GNS3_SERVER_REPO}\"|" \
+                -e "s|^GNS3_SERVER_REF=.*|GNS3_SERVER_REF=\"${GNS3_SERVER_REF}\"|" /etc/gns3vm-sources.conf
+fi
 
 # Make sure we have the latest version of the GNS3 VM menu
 sudo mv "/tmp/gns3welcome.py" "/usr/local/bin/gns3welcome.py"

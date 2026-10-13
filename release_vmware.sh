@@ -17,14 +17,22 @@ then
     exit 1
 fi
 
-export GNS3_RELEASE_CHANNEL=`echo -n $GNS3_VERSION | sed "s/\.[^.]*$//"`
+# GNS3_SERVER_REPO and GNS3_SERVER_REF can be set in the environment to
+# install the GNS3 server from a fork (see config/gns3vm-sources.conf)
+if [[ "$GNS3_VERSION" == *dev ]]
+then
+    # development release, e.g. 3.1dev
+    export GNS3_RELEASE_CHANNEL=`echo -n $GNS3_VERSION | sed "s/dev$//"`
+else
+    export GNS3_RELEASE_CHANNEL=`echo -n $GNS3_VERSION | sed "s/\.[^.]*$//"`
+fi
 
 echo "Building VMware VM for GNS3 $GNS3_VERSION"
 echo "Release channel: $GNS3_RELEASE_CHANNEL"
 
 if [[ "$GNS3_VM_FILE" == "" ]]
 then
-    export GNS3VM_URL="https://github.com/GNS3/gns3-vm/releases/download/v${GNS3VM_VERSION}/GNS3VM.Base.${GNS3VM_VERSION}.zip"
+    export GNS3VM_URL="https://github.com/${GNS3_VM_REPO:-GNS3/gns3-vm}/releases/download/v${GNS3VM_VERSION}/GNS3VM.Base.${GNS3VM_VERSION}.zip"
     echo "Download the base GNS3 VM version ${GNS3VM_VERSION} from GitHub"
     if [[ ! -f "/tmp/GNS3VM.Base.${GNS3VM_VERSION}.zip" ]]
     then

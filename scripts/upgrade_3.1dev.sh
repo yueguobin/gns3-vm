@@ -19,20 +19,42 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
-export BRANCH="resolute-unstable"
+# use the repositories this VM was installed from
+if [[ -f "/etc/gns3vm-sources.conf" ]]
+then
+    . "/etc/gns3vm-sources.conf"
+fi
+
+export BRANCH="${GNS3_VM_DEV_BRANCH:-resolute-unstable}"
 export GNS3_RELEASE_CHANNEL="3.1dev"
 export UNSTABLE_APT="1"
+export GNS3_SERVER_REPO="${GNS3_SERVER_REPO:-GNS3/gns3-server}"
+export GNS3_WEB_UI_REPO="${GNS3_WEB_UI_REPO:-GNS3/gns3-web-ui}"
+export GNS3_WEB_UI_REF="${GNS3_WEB_UI_REF:-3.1}"
+
+# version to install: the argument, else the configured ref, else the
+# latest development version
+if [[ -z "$1" ]]
+then
+    export GNS3_SERVER_REF="${GNS3_SERVER_REF:-3.1}"
+else
+    export GNS3_SERVER_REF="$1"
+fi
 
 # upgrade the GNS3 VM first
-curl -Lk "https://raw.githubusercontent.com/GNS3/gns3-vm/$BRANCH/scripts/upgrade_vm.sh" > /tmp/upgrade_vm.sh && bash -x /tmp/upgrade_vm.sh
+curl -Lk "https://raw.githubusercontent.com/${GNS3_VM_REPO:-GNS3/gns3-vm}/$BRANCH/scripts/upgrade_vm.sh" > /tmp/upgrade_vm.sh && bash -x /tmp/upgrade_vm.sh
 
 # install the GNS3 server
 if [[ ! -d "gns3-server" ]]
 then
     sudo apt update
     sudo apt install -y git
-    git clone https://github.com/GNS3/gns3-server.git gns3-server
+    git clone "https://github.com/${GNS3_SERVER_REPO}.git" gns3-server
 fi
+
+# follow the configured repository, even when the server was cloned from
+# another one (e.g. switching an existing VM to a fork)
+git -C gns3-server remote set-url origin "https://github.com/${GNS3_SERVER_REPO}.git"
 
 sudo chown -R gns3:gns3 gns3-server
 cd gns3-server
@@ -40,12 +62,12 @@ sudo chmod -R 775 .git
 git reset --hard HEAD
 git fetch origin
 
-if [[ -z "$1" ]] || [[ "$1" == "3.1" ]]
+if [[ "$GNS3_SERVER_REF" == "3.1" ]]
 then
   git checkout "3.1" # latest dev version on this branch
   git pull
 else
-  git checkout $1
+  git checkout "$GNS3_SERVER_REF"
 fi
 
 # use the GNS3 server virtual environment
@@ -63,7 +85,7 @@ fi
 python3 -m pip install .[ai-features]
 
 # update the web-ui as well
-if [[ -z "$1" ]] || [[ "$1" == "3.1" ]]
+if [[ "$GNS3_SERVER_REF" == "3.1" ]]
 then
   cd ..
   if [[ ! -d "gns3-web-ui" ]]
@@ -71,14 +93,17 @@ then
     sudo apt update
     sudo apt install -y npm
     sudo npm install yarn --global
-    git clone https://github.com/GNS3/gns3-web-ui.git gns3-web-ui
+    git clone "https://github.com/${GNS3_WEB_UI_REPO}.git" gns3-web-ui
   fi
+  # follow the configured repository, even when the web UI was cloned from
+  # another one
+  git -C gns3-web-ui remote set-url origin "https://github.com/${GNS3_WEB_UI_REPO}.git"
   sudo chown -R gns3:gns3 gns3-web-ui
   cd gns3-web-ui
   sudo chmod -R 775 .git
   git reset --hard HEAD
   git fetch origin
-  git checkout "3.1"
+  git checkout "$GNS3_WEB_UI_REF"
   git pull
   yarn install
   yarn ng build --source-map=false --configuration=production --base-href /static/web-ui/
@@ -88,6 +113,6 @@ then
   echo "Development Web-Ui installed"
 fi
 
-echo "Update to 3.1dev completed, rebooting in 10 seconds..."
+echo "Update to $GNS3_SERVER_REF (3.1dev) completed, rebooting in 10 seconds..."
 sleep 10
 sudo reboot

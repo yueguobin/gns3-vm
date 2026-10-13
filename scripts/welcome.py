@@ -145,7 +145,43 @@ def get_release_channel():
         return "3.1"
 
 
-def get_all_releases(release_channel, dev=False):
+def get_sources_config():
+    """
+    Returns the repositories this VM was installed from.
+    See config/gns3vm-sources.conf in the gns3-vm repository.
+    """
+
+    sources = {
+        "vm_repo": "GNS3/gns3-vm",
+        "vm_branch": "resolute-stable",
+        "vm_dev_branch": "resolute-unstable",
+        "server_repo": "GNS3/gns3-server"
+    }
+    keys = {
+        "GNS3_VM_REPO": "vm_repo",
+        "GNS3_VM_BRANCH": "vm_branch",
+        "GNS3_VM_DEV_BRANCH": "vm_dev_branch",
+        "GNS3_SERVER_REPO": "server_repo"
+    }
+
+    try:
+        with open("/etc/gns3vm-sources.conf") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("#") or "=" not in line:
+                    continue
+                key, _, value = line.partition("=")
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key in keys and value:
+                    sources[keys[key]] = value
+    except OSError:
+        pass
+
+    return sources
+
+
+def get_all_releases(release_channel, dev=False, repository="GNS3/gns3-server"):
     """
     Returns all releases for a corresponding release channel (e.g. 2.1, 2.2 etc.)
     Excludes alphas, betas, RCs and development releases by default.
@@ -153,7 +189,7 @@ def get_all_releases(release_channel, dev=False):
 
     releases = []
     try:
-        tags_url = urllib.request.urlopen("https://api.github.com/repos/GNS3/gns3-server/tags")
+        tags_url = urllib.request.urlopen("https://api.github.com/repos/{}/tags".format(repository))
         raw_data = tags_url.read()
     except urllib.request.URLError as e:
         d.infobox("Cannot connect to GitHub to get the GNS3 versions: {}".format(str(e)))
@@ -192,17 +228,18 @@ def upgrade(force=False):
             return
 
     release_channel = get_release_channel()
+    sources = get_sources_config()
     choices = []
     match = re.search("(.*)dev|a|rc|b", release_channel)
     if match:
         # development release (unstable)
-        releases = get_all_releases(match.group(1), dev=True)
-        script_url = "https://raw.githubusercontent.com/GNS3/gns3-vm/resolute-unstable/scripts/upgrade_{}.sh".format(release_channel)
+        releases = get_all_releases(match.group(1), dev=True, repository=sources["server_repo"])
+        script_url = "https://raw.githubusercontent.com/{}/{}/scripts/upgrade_{}.sh".format(sources["vm_repo"], sources["vm_dev_branch"], release_channel)
         choices.append((match.group(1), "Latest development version on {} branch".format(match.group(1))))
     else:
         # current release (stable)
-        releases = get_all_releases(release_channel)
-        script_url = "https://raw.githubusercontent.com/GNS3/gns3-vm/resolute-stable/scripts/upgrade_{}.sh".format(release_channel)
+        releases = get_all_releases(release_channel, repository=sources["server_repo"])
+        script_url = "https://raw.githubusercontent.com/{}/{}/scripts/upgrade_{}.sh".format(sources["vm_repo"], sources["vm_branch"], release_channel)
 
     if releases is None:
         return

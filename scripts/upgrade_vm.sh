@@ -24,10 +24,19 @@ set -e
 
 export DEBIAN_FRONTEND="noninteractive"
 
+# use the repositories this VM was installed from
+if [[ -f "/etc/gns3vm-sources.conf" ]]
+then
+    . "/etc/gns3vm-sources.conf"
+fi
+
+export GNS3_VM_REPO="${GNS3_VM_REPO:-GNS3/gns3-vm}"
+export BRANCH="${BRANCH:-${GNS3_VM_BRANCH:-resolute-stable}}"
+
 cd /tmp
 sudo rm -Rf gns3-vm-*
-echo "Download https://github.com/GNS3/gns3-vm/archive/${BRANCH}.tar.gz"
-curl -Lk "https://github.com/GNS3/gns3-vm/archive/${BRANCH}.tar.gz" > gns3vm.tar.gz
+echo "Download https://github.com/${GNS3_VM_REPO}/archive/${BRANCH}.tar.gz"
+curl -Lk "https://github.com/${GNS3_VM_REPO}/archive/${BRANCH}.tar.gz" > gns3vm.tar.gz
 tar -xzf gns3vm.tar.gz
 rm gns3vm.tar.gz
 
@@ -46,7 +55,7 @@ sudo apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confol
 
 # upgrade the GNS3 welcome script
 sudo -H pip3 install pythondialog bcrypt --break-system-packages
-curl -Lk "https://raw.githubusercontent.com/GNS3/gns3-vm/$BRANCH/scripts/welcome.py" > /tmp/gns3welcome.py
+curl -Lk "https://raw.githubusercontent.com/${GNS3_VM_REPO}/$BRANCH/scripts/welcome.py" > /tmp/gns3welcome.py
 sudo mv "/tmp/gns3welcome.py" "/usr/local/bin/gns3welcome.py"
 sudo chmod 755 "/usr/local/bin/gns3welcome.py"
 

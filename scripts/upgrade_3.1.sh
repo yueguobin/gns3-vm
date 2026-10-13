@@ -19,13 +19,19 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
-export BRANCH="resolute-stable"
+# use the repositories this VM was installed from
+if [[ -f "/etc/gns3vm-sources.conf" ]]
+then
+    . "/etc/gns3vm-sources.conf"
+fi
+
+export BRANCH="${GNS3_VM_BRANCH:-resolute-stable}"
 export GNS3_RELEASE_CHANNEL="3.1dev"
 export UNSTABLE_APT="0"
 export PYPI_GNS3SERVER_JSON_URL="https://pypi.org/pypi/gns3-server/json"
 
 # upgrade the GNS3 VM first
-curl -Lk "https://raw.githubusercontent.com/GNS3/gns3-vm/$BRANCH/scripts/upgrade_vm.sh" > /tmp/upgrade_vm.sh && bash -x /tmp/upgrade_vm.sh
+curl -Lk "https://raw.githubusercontent.com/${GNS3_VM_REPO:-GNS3/gns3-vm}/$BRANCH/scripts/upgrade_vm.sh" > /tmp/upgrade_vm.sh && bash -x /tmp/upgrade_vm.sh
 
 # install the GNS3 server
 if [[ -z "$1" ]]

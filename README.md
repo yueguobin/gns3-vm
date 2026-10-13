@@ -63,6 +63,20 @@ If you want to install GNS3 you need to unzip the OVA and run:
 ovftool --allowAllExtraConfig -dm=thin  -ds=datastore1 "GNS3 VM.ova" "vi://root:PASSWORD@HOST"
 ```
 
+## Installing from a fork
+
+By default a GNS3 VM installs GNS3 from the official repositories. It can be
+built from a fork instead, either by editing `config/gns3vm-sources.conf` in
+your fork, or by setting the variables in the environment:
+
+```
+GNS3_SERVER_REPO=myuser/gns3-server GNS3_SERVER_REF=my-branch ./release_vmware.sh 3.1
+```
+
+All the variables are documented in `config/gns3vm-sources.conf`. The
+installed copy of that file is `/etc/gns3vm-sources.conf`, and it is what the
+in-VM upgrade and restore commands use to update the VM from the same place.
+
 ## Tools
 
 ### ova.py

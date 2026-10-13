@@ -24,9 +24,16 @@ ImageDir=/usr/share/plymouth/themes/gns3
 ScriptFile=/usr/share/plymouth/themes/gns3/gns3.script
 EOF
 
-curl -Lk "https://raw.githubusercontent.com/GNS3/gns3-vm/master/plymouth/logo_wo_bar.png" > /usr/share/plymouth/themes/gns3/logo_wo_bar.png
-curl -Lk "https://raw.githubusercontent.com/GNS3/gns3-vm/master/plymouth/bar.png" > /usr/share/plymouth/themes/gns3/bar.png
-curl -Lk "https://raw.githubusercontent.com/GNS3/gns3-vm/master/plymouth/end.png" > /usr/share/plymouth/themes/gns3/end.png
+# use the repositories this VM was installed from
+if [[ -f "/etc/gns3vm-sources.conf" ]]
+then
+    . "/etc/gns3vm-sources.conf"
+fi
+GNS3_VM_REPO="${GNS3_VM_REPO:-GNS3/gns3-vm}"
+
+curl -Lk "https://raw.githubusercontent.com/${GNS3_VM_REPO}/master/plymouth/logo_wo_bar.png" > /usr/share/plymouth/themes/gns3/logo_wo_bar.png
+curl -Lk "https://raw.githubusercontent.com/${GNS3_VM_REPO}/master/plymouth/bar.png" > /usr/share/plymouth/themes/gns3/bar.png
+curl -Lk "https://raw.githubusercontent.com/${GNS3_VM_REPO}/master/plymouth/end.png" > /usr/share/plymouth/themes/gns3/end.png
 
 cat > /usr/share/plymouth/themes/gns3/gns3.script <<EOF
 # Original script

@@ -15,7 +15,16 @@ set -e
 # sudo apt-get install -y --install-recommends linux-generic-hwe-22.04
 
 cd /tmp/config
-sudo GNS3_RELEASE_CHANNEL="$GNS3_RELEASE_CHANNEL" bash install.sh
+# pass the source repositories (if any) to the configuration script
+sudo GNS3_RELEASE_CHANNEL="$GNS3_RELEASE_CHANNEL" \
+     GNS3_VM_REPO="$GNS3_VM_REPO" \
+     GNS3_VM_BRANCH="$GNS3_VM_BRANCH" \
+     GNS3_VM_DEV_BRANCH="$GNS3_VM_DEV_BRANCH" \
+     GNS3_SERVER_REPO="$GNS3_SERVER_REPO" \
+     GNS3_SERVER_REF="$GNS3_SERVER_REF" \
+     GNS3_WEB_UI_REPO="$GNS3_WEB_UI_REPO" \
+     GNS3_WEB_UI_REF="$GNS3_WEB_UI_REF" \
+     bash install.sh
 
 # Install the GNS3 VM menu dependency
 sudo apt install -y cpu-checker dialog
