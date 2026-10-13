@@ -22,6 +22,15 @@ set -e
 # remember what was explicitly requested before falling back to the defaults
 GNS3_SERVER_REPO_OVERRIDE="$GNS3_SERVER_REPO"
 GNS3_SERVER_REF_OVERRIDE="$GNS3_SERVER_REF"
+
+# fall back to the repositories this VM is configured for, when none was
+# passed in the environment (there is nothing to fall back to at build time,
+# the file is written by install.sh)
+if [[ -f "/etc/gns3vm-sources.conf" ]]
+then
+    . "/etc/gns3vm-sources.conf"
+fi
+
 export GNS3_SERVER_REPO="${GNS3_SERVER_REPO:-GNS3/gns3-server}"
 
 if [[ "$GNS3_RELEASE_CHANNEL" == "2.2" ]]

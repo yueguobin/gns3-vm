@@ -155,6 +155,39 @@
       "ssh_password": "{{user `ssh_pass`}}",
       "ssh_timeout": "20m",
       "ssh_handshake_attempts": "20"
+    },
+    {
+      "type": "qemu",
+      "name": "qemu-amd64",
+      "vm_name": "GNS3 VM",
+      "qemu_binary": "qemu-system-x86_64",
+      "disk_image": true,
+      "disk_size": "100G",
+      "disk_compression": true,
+      "format": "qcow2",
+      "headless": true,
+      "accelerator": "kvm",
+      "net_device": "virtio-net-pci",
+      "iso_url": "gns3vm-disk1.qcow2",
+      "iso_checksum": "none",
+      "qemuargs": [
+        [
+          "-drive",
+          "file=gns3vm-disk1.qcow2,if=virtio,format=qcow2,cache=none"
+        ],
+        [
+          "-drive",
+          "file=gns3vm-disk2.qcow2,if=virtio,format=qcow2,cache=none"
+        ]
+      ],
+      "cpus": "{{user `cpus`}}",
+      "memory": "{{user `memory`}}",
+      "shutdown_command": "echo {{user `ssh_name`}} | sudo -S shutdown -P now",
+      "shutdown_timeout": "20m",
+      "ssh_username": "{{user `ssh_name`}}",
+      "ssh_password": "{{user `ssh_pass`}}",
+      "ssh_timeout": "20m",
+      "ssh_handshake_attempts": "20"
     }
   ]
 }
